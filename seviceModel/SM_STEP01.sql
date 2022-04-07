@@ -1,7 +1,7 @@
 USE dataIn;
-DROP PROCEDURE IF EXISTS DM_STEP01;
+DROP PROCEDURE IF EXISTS SM_STEP01;
 DELIMITER $$
-Create Procedure DM_STEP01()
+Create Procedure SM_STEP01()
 #평가자 기준
 #CASE 갯수에 맞는 데이터 1차 데이터 정제
 #CASE 갯수는 최대 2개이며
@@ -15,15 +15,8 @@ BEGIN
    DECLARE PROCESSINDEX INTEGER;
    DECLARE DATAININDEX INTEGER;
    DECLARE CASECOUNT INTEGER;
-select * from analysis_report;
-   SELECT  idx
-        ,  dataInIdx
-   INTO PROCESSINDEX, DATAININDEX FROM analysis_report
-   WHERE analysis_type = 'DM' AND stCode ='ED' ORDER BY updateTime LIMIT  1;
-
-   UPDATE analysis_report SET stCode ='PS' WHERE idx = PROCESSINDEX;
-
-   INSERT INTO DM_log (idx, log) VALUE (PROCESSINDEX, 'DM_STEP01_START');
+   SET PROCESSINDEX = 2;
+   SET DATAININDEX = 5802;
 
    DELETE FROM DM_analysisDM_step01 WHERE idx = PROCESSINDEX;
 
@@ -36,9 +29,5 @@ select * from analysis_report;
    ELSE
        call DM_STEP01_CASE_0(PROCESSINDEX, DATAININDEX);
    END IF;
-
-   INSERT INTO DM_log (idx, log) VALUE (PROCESSINDEX, 'DM_STEP01_END');
-
-   call DM_STEP02(PROCESSINDEX);
 END $$
 DECLARE;

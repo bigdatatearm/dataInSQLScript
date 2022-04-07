@@ -6,9 +6,13 @@ Create Procedure DM_STEP04(IN PROCESSINDEX INTEGER)
 BEGIN
    DECLARE MARYMONDYUM INTEGER;
 
+INSERT INTO DM_log (idx, log) VALUE (PROCESSINDEX, 'DM_STEP04_START');
+
 # 설정 select 작업 필요
 # 피평가자
-   SET MARYMONDYUM = 2;
+SELECT DM_option.MARYMONDYUM
+INTO MARYMONDYUM
+FROM DM_option WHERE idx = PROCESSINDEX;
 
 DELETE FROM DM_analysisDM_step04_appraisee_no WHERE idx = PROCESSINDEX;
 
@@ -33,35 +37,35 @@ INSERT INTO DM_analysisDM_step04_appraisee_no
 DELETE FROM DM_analysisDM_step04 WHERE idx = PROCESSINDEX;
 
 INSERT INTO DM_analysisDM_step04
-   (idx, groupIdx, itemIdx, itemIdxValue, middle_model_index, quiz_no, data_val, distribution, sum_distribution )
+   (idx, appraisee_no, groupIdx, itemIdx, itemIdxValue, middle_model_index, quiz_no, data_val )
    SELECT PROCESSINDEX
+         ,A.appraisee_no
          ,A.groupIdx
          ,A.itemIdx
          ,A.itemIdxValue
          ,B.middle_model_index
          ,B.quiz_no
-         ,SUM(data_val)/COUNT(*)
-         ,B.distribution
-         ,B.sum_distribution
+         ,B.data_val
          FROM DM_analysisDM_step04_appraisee_no A
          INNER JOIN DM_analysisDM_step03 B ON A.idx = B.idx AND A.appraisee_no = B.appraisee_no
 #변수
          WHERE A.idx = PROCESSINDEX
-         GROUP BY  A.groupIdx, A.itemIdx, A.itemIdxValue, B.quiz_no, B.distribution, B.sum_distribution;
+         GROUP BY  A.groupIdx, A.appraisee_no, A.itemIdx, A.itemIdxValue, B.quiz_no;
 
 DELETE FROM DM_analysisDM_step04_middle_model WHERE idx = PROCESSINDEX;
 
 INSERT INTO DM_analysisDM_step04_middle_model
-    (idx, groupIdx, itemIdx, itemIdxValue, middle_model_index, sum_data_val)
-    SELECT idx, groupIdx, itemIdx, itemIdxValue, middle_model_index, SUM(A.DATA)
-        FROM(
-            SELECT idx, groupIdx, itemIdx, itemIdxValue, middle_model_index, data_val*distribution/sum_distribution AS DATA
-            from DM_analysisDM_step04
-#변수
-            WHERE idx = PROCESSINDEX
-            )A
-        GROUP BY A.idx, A.groupIdx, A.itemIdx, A.itemIdxValue, A.middle_model_index
+    (idx, appraisee_no, groupIdx, itemIdx, itemIdxValue, middle_model_index, sum_data_val)
+    SELECT PROCESSINDEX, A.appraisee_no, B.groupIdx, B.itemIdx, B.itemIdxValue, A.middle_model_index, A.sum_data_val
+        FROM( SELECT appraisee_no, middle_model_index, sum_data_val FROM DM_analysisDM_step03_middle_model WHERE idx =PROCESSINDEX )A
+        INNER JOIN ( SELECT groupIdx, itemIdx, itemIdxValue, appraisee_no FROM DM_analysisDM_step04_appraisee_no WHERE idx =PROCESSINDEX )B
+        ON A.appraisee_no = B.appraisee_no
+
 ;
+
+INSERT INTO DM_log (idx, log) VALUE (PROCESSINDEX, 'DM_STEP04_END');
+
+UPDATE analysis_report SET stCode ='PE' WHERE idx = PROCESSINDEX;
 
 END $$
 DECLARE;

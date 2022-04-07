@@ -18,15 +18,19 @@ BEGIN
 
 # 설정 select 작업 필요
 # 평가자
-   SET APPRAISER = 3;
+#   SET APPRAISER = 3;
 # 피평가자
-   SET MARYMONDYUM = 2;
+#   SET MARYMONDYUM = 2;
 # 점변환
-   SET 100YN = 1;
+#   SET 100YN = 1;
 # 척도최대값
-   SET indexValue = 5;
+#   SET indexValue = 5;
 
+INSERT INTO DM_log (idx, log) VALUE (PROCESSINDEX, 'DM_STEP02_START');
 
+SELECT DM_option.APPRAISER, DM_option.MARYMONDYUM,  DM_option.100YN, DM_option.indexValue
+INTO  APPRAISER, MARYMONDYUM,  100YN, indexValue
+FROM DM_option WHERE idx = PROCESSINDEX;
 
 DELETE FROM DM_analysisDM_step02 WHERE idx = PROCESSINDEX;
 
@@ -116,5 +120,10 @@ INSERT INTO DM_analysisDM_step02_middle_model
             )A
         GROUP BY A.idx, A.appraisee_no, A.appraiseeGrade, A.middle_model_index
 ;
+
+INSERT INTO DM_log (idx, log) VALUE (PROCESSINDEX, 'DM_STEP02_END');
+
+call DM_STEP03(PROCESSINDEX);
+
 END $$
 DECLARE;
